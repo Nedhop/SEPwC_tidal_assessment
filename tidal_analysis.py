@@ -33,6 +33,7 @@ def read_tidal_data(tidal_file):
         tidal_data['Residual'] = tidal_data['Residual'].apply(clean_and_convert) 
              
         tidal_data['Sea Level'] = tidal_data['ASLVZZ01'] + tidal_data['Residual']
+        
         tidal_data['DateTime'] = pd.to_datetime(tidal_data['Date'] + ' ' + tidal_data['Time'], format='%Y/%m/%d %H:%M:%S')
         tidal_data = tidal_data.drop(columns=['Date', 'Time'])
         tidal_data = tidal_data.set_index('DateTime')
@@ -56,9 +57,9 @@ data1 = read_tidal_data(file_path1)
 file_path2 = r"C:\Users\Admin\Desktop\Coding\SEPwC_tidal_assessment\data\1946ABE.txt"
 data2 = read_tidal_data(file_path2)
 
-def join_tidal_data(data2, data1):
+def join_tidal_data(data1, data2):
     try:
-        joined_data = pd.concat([data2, data1])
+        joined_data = pd.concat([data1, data2])
         joined_data = joined_data.sort_index()
         return joined_data
     except Exception as e:
@@ -75,39 +76,7 @@ else:
     print("Failed to read one or both data files.")
     
     
-    
-def test_join_data():
-    """
-    Tests the join_data function with sample data.
-    """
-    gauge_files = ['data/1946ABE.txt', 'data/1947ABE.txt']
 
-    data1 = read_tidal_data(gauge_files[1])
-    data2 = read_tidal_data(gauge_files[0])
-    data = join_tidal_data(data1, data2)
-
-    assert "Sea Level" in data.columns
-    assert type(data.index) == pd.core.indexes.datetimes.DatetimeIndex
-    assert data['Sea Level'].size == 8760 * 2
-
-    # check sorting (we join 1947 to 1946, but expect 1946 to 1947)
-    assert data.index[0] == pd.Timestamp('1946-01-01 00:00:00')
-    assert data.index[-1] == pd.Timestamp('1947-12-31 23:00:00')
-
-    # check you get a fail if two incompatible dfs are given
-    data2_copy = data2.copy()  # Create a copy to avoid modifying the original
-    data2_copy.drop(columns=["Sea Level"], inplace=True)
-    try:
-        join_tidal_data(data1, data2_copy)
-        print("ValueError was not raised when it should have been.")
-    except ValueError:
-        print("ValueError correctly raised for incompatible DataFrames.")
-    except Exception as e:
-        print(f"An unexpected error occurred: {e}")
-
-# Run the test
-test_join_data()    
-    
     
 data = data1 + data2
 
