@@ -50,14 +50,15 @@ def read_tidal_data(tidal_file):
             return None
         
     
+gauge_files = ['data/1946ABE.txt', 'data/1947ABE.txt']
+
+data1 = read_tidal_data(gauge_files[1])
+data2 = read_tidal_data(gauge_files[0])
 
     
-file_path1 = r"C:\Users\Admin\Desktop\Coding\SEPwC_tidal_assessment\data\1947ABE.txt"
-data1 = read_tidal_data(file_path1)
-file_path2 = r"C:\Users\Admin\Desktop\Coding\SEPwC_tidal_assessment\data\1946ABE.txt"
-data2 = read_tidal_data(file_path2)
 
-def join_tidal_data(data1, data2):
+
+def join_data(data1, data2):
     try:
         joined_data = pd.concat([data1, data2])
         joined_data = joined_data.sort_index()
@@ -66,7 +67,7 @@ def join_tidal_data(data1, data2):
         print(f"Error joining dataframes: {e}")
         return None
 if data1 is not None and data2 is not None:
-    joined_data = join_tidal_data(data2, data1)
+    joined_data = join_data(data2, data1)
     if joined_data is not None:
         print("Joined Data:")
         print(joined_data.head())
@@ -75,7 +76,7 @@ if data1 is not None and data2 is not None:
 else:
     print("Failed to read one or both data files.")
     
-    
+data = join_data(data1, data2)    
     
 def extract_single_year_remove_mean(year, data):
     if not isinstance(data.index, pd.DatetimeIndex):
@@ -104,11 +105,6 @@ def extract_section_remove_mean(start, end, data):
 
   
 
-
-
-def join_data(data1, data2):
-
-    return 
 
 
 
