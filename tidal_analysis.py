@@ -11,13 +11,14 @@ import numpy as np
 import uptide
 import pytz
 import math
-
+import pytest 
 
 def read_tidal_data(tidal_file):
     try:
         #since the text file is not in csv and has metadata at the start 
         #it will have to skip the first rows and have each columns named
         #also have to skip index 10 as its an exampleof what the data is
+        
 
         tidal_data = pd.read_csv(tidal_file, sep=r'\s+', skiprows=11, header=None)
         tidal_data.columns = ['Cycle', 'Date', 'Time', 'ASLVZZ01', 'Residual']
@@ -33,7 +34,6 @@ def read_tidal_data(tidal_file):
         tidal_data['Residual'] = tidal_data['Residual'].apply(clean_and_convert) 
              
         tidal_data['Sea Level'] = tidal_data['ASLVZZ01'] + tidal_data['Residual']
-        
         tidal_data['DateTime'] = pd.to_datetime(tidal_data['Date'] + ' ' + tidal_data['Time'], format='%Y/%m/%d %H:%M:%S')
         tidal_data = tidal_data.drop(columns=['Date', 'Time'])
         tidal_data = tidal_data.set_index('DateTime')
@@ -76,44 +76,34 @@ else:
     print("Failed to read one or both data files.")
     
     
-
-    
-data = data1 + data2
-
-
-
-if data1 is not None:
-    assert "Sea Level" in data1.columns
-    assert type(data1.index) == pd.core.indexes.datetimes.DatetimeIndex
-    assert data1['Sea Level'].size == 8760
-    assert pd.Timestamp('1947-01-01 00:00:00') in data1.index
-    assert pd.Timestamp('1947-12-31 23:00:00') in data1.index
-    assert data1['Sea Level'].isnull().any()
-    assert pd.api.types.is_float_dtype(data1['Sea Level'])
-    print("All assertions passed!")
-
-data1['Date'] = pd.to_datetime(data1["Date"])
-data1['Year'] = data1['Date'].dt.year
-data1['Month'] = data1['Date'].dt.month
-data1['Day'] = data1['Date'].dt.day
-data1['Time'] = pd.to_datetime(data1['Time'], format='%H:%M:%S').dt.time
-print(data1['Time'])
-
-
-
-
-    return 0
     
 def extract_single_year_remove_mean(year, data):
-   
-
-    return 
+    if not isinstance(data.index, pd.DatetimeIndex):
+            raise ValueError("DataFrame index must be a DatetimeIndex")
+    year_data = data[data.index.year == int(year)].copy()
+    mean_sea_level = year_data['Sea Level'].mean()
+    year_data['Sea Level'] = year_data['Sea Level'] - mean_sea_level
+    return year_data
+  
 
 
 def extract_section_remove_mean(start, end, data):
+    try:
+        start_time = pd.to_datetime(start, format='%Y%m%d')
+        end_time = pd.to_datetime(end, format='%Y%m%d')
+        if not isinstance(data.index, pd.DatetimeIndex):
+                raise ValueError("DataFrame index must be a DatetimeIndex")
+        section_data = data.loc[start_time:end_time].copy()
+        mean_sea_level = section_data['Sea Level'].mean()
+        section_data['Sea Level'] = section_data['Sea Level'] - mean_sea_level
+        return section_data
+    except KeyError as e:
+        raise KeyError(f"Date range not found in data: {e}") from e
+    except Exception as e:
+        raise Exception(f"Error in extract_section_remove_mean: {e}") from e
 
+  
 
-    return 
 
 
 def join_data(data1, data2):
