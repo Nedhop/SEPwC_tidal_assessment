@@ -93,6 +93,7 @@ def extract_single_year_remove_mean(year, data):
 
 def extract_section_remove_mean(start, end, data):
     if not isinstance(data.index, pd.DatetimeIndex):
+        raise ValueError("DataFrame index must be a DatetimeIndex")
     try:
         start_time = pd.to_datetime(start, format='%Y%m%d')
         end_time = pd.to_datetime(end, format='%Y%m%d')
