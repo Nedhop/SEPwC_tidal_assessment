@@ -59,8 +59,10 @@ data2 = read_tidal_data(gauge_files[0])
 
 
 def join_data(data1, data2):
+    #time column couldnt be found so instead of joining the data i am joining th ecolumns in eac hdata 
     try:
-        joined_data = pd.concat([data1, data2])
+        common_columns = list(set(data1.columns) & set(data2.columns))
+        joined_data = pd.concat([data1[common_columns], data2[common_columns]])
         joined_data = joined_data.sort_index()
         return joined_data
     except Exception as e:
