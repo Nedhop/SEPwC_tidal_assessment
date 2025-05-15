@@ -117,7 +117,7 @@ def tidal_analysis(data_segment, constituents, start_datetime):
      time_series = data_segment.index.to_pydatetime()
      try:
          model = uptide.fit(time_series, sea_level, constituents, lat=57)
-         amp = model.aplitude
+         amp = model.amplitude
          pha = model.phase
          return amp, pha
      except Exception as e:
