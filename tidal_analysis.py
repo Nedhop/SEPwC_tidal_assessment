@@ -97,14 +97,16 @@ def extract_section_remove_mean(start, end, data):
     try:
         start_time = pd.to_datetime(start, format='%Y%m%d')
         end_time = pd.to_datetime(end, format='%Y%m%d')
+        #the amount of data values is lower than expected so make sure all time are included
+        end_time = end_time + pd.Timedelta(hours=23, minutes=59, seconds=59)
         section_data = data.loc[start_time:end_time].copy()
         mean_sea_level = section_data['Sea Level'].mean()
         section_data['Sea Level'] = section_data['Sea Level'] - mean_sea_level
         return section_data
-    except KeyError as e:
-        raise KeyError(f"Date range not found in data: {e}") from e
+    except KeyError:
+        raise KeyError(f"Date range '{start}' to '{end}' not found in data.")
     except Exception as e:
-        raise Exception(f"Error in extract_section_remove_mean: {e}") from e
+        raise Exception(f"An unexpected error occurred: {e}")
 
   
 
