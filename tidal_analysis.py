@@ -35,7 +35,6 @@ def read_tidal_data(tidal_file):
              
         tidal_data['Sea Level'] = tidal_data['ASLVZZ01'] + tidal_data['Residual']
         tidal_data['DateTime'] = pd.to_datetime(tidal_data['Date'] + ' ' + tidal_data['Time'], format='%Y/%m/%d %H:%M:%S')
-        tidal_data = tidal_data.drop(columns=['Date', 'Time'])
         tidal_data = tidal_data.set_index('DateTime')
         tidal_data = tidal_data.sort_index()
         #if i 
