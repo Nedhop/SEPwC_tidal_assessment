@@ -92,7 +92,7 @@ def extract_single_year_remove_mean(year, data):
 
 
 def extract_section_remove_mean(start, end, data):
-    if not isinstance(data.index, pd.Datetimeindex)
+    if not isinstance(data.index, pd.DatetimeIndex):
     try:
         start_time = pd.to_datetime(start, format='%Y%m%d')
         end_time = pd.to_datetime(end, format='%Y%m%d')
