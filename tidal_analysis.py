@@ -92,11 +92,10 @@ def extract_single_year_remove_mean(year, data):
 
 
 def extract_section_remove_mean(start, end, data):
+    if not isinstance("DataFrame index must be a Datetimeindex")
     try:
         start_time = pd.to_datetime(start, format='%Y%m%d')
         end_time = pd.to_datetime(end, format='%Y%m%d')
-        if not isinstance(data.index, pd.DatetimeIndex):
-                raise ValueError("DataFrame index must be a DatetimeIndex")
         section_data = data.loc[start_time:end_time].copy()
         mean_sea_level = section_data['Sea Level'].mean()
         section_data['Sea Level'] = section_data['Sea Level'] - mean_sea_level
