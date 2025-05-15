@@ -110,9 +110,9 @@ def extract_section_remove_mean(start, end, data):
 start_date = "19460115"
 end_date = "19470310"
 data_segment = extract_section_remove_mean(start_date, end_date, data)
-year1946_47 = extract_section_remove_mean("19460115", "19470310", data)
+
         
-def tidal_analysis(data, constituents, start_datetime):
+def tidal_analysis(data_segment, constituents, start_datetime):
      sea_level = data_segment['Sea Level'].values
      time_series = data_segment.index.to_pydatetime()
      try:
