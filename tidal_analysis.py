@@ -115,6 +115,7 @@ data_segment = extract_section_remove_mean(start_date, end_date, data)
 def tidal_analysis(data_segment, constituents, start_datetime):
      sea_level = data_segment['Sea Level'].values
      time_series = data_segment.index.to_pydatetime()
+     print(f"tidal_analysis input: data_segment = {data_segment}, constituents = {constituents}, start_datetime = {start_datetime}")
      try:
          model = uptide.fit(time_series, sea_level, constituents, lat=57)
          print(f"Uptide model: {model}")
