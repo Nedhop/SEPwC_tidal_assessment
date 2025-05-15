@@ -107,8 +107,25 @@ def extract_section_remove_mean(start, end, data):
         raise KeyError(f"Date range '{start}' to '{end}' not found in data.")
     except Exception as e:
         raise Exception(f"An unexpected error occurred: {e}")
+start_date = "19460115"
+end_date = "19470310"
+data_segment = extract_section_remove_mean(start_date, end_date, data)
+year1946_47 = extract_section_remove_mean("19460115", "19470310", data)
+        
+def tidal_analysis(data, constituents, start_datetime):
+     sea_level = data_segment['Sea Level'].values
+     time_series = data_segment.index.to_pydatetime()
+     try:
+         model = uptide.fit(time_series, sea_level, constituents, lat=57)
+         amp = model.aplitude
+         pha = model.phase
+         return amp, pha
+     except Exception as e:
+         print(f"Error in tidal_analysis: {e}")
+         return [0.0, 0.0], [0.0, 0.0] 
 
-  
+constituents = ['M2', 'S2']
+
 
 
 
@@ -118,10 +135,7 @@ def sea_level_rise(data):
                                                      
     return 
 
-def tidal_analysis(data, constituents, start_datetime):
 
-
-    return 
 
 def get_longest_contiguous_data(data):
 
