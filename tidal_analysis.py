@@ -50,15 +50,21 @@ def read_tidal_data(tidal_file):
             print(f"An unexpected error occurred: {e}")
             return None
         
+#when testing without gitbash to see where erros occur switch to
+#file_path1 = r"C:\Users\Admin\Desktop\Coding\SEPwC_tidal_assessment\data\1946ABE.txt"
+#file_path2 = r"C:\Users\Admin\Desktop\Coding\SEPwC_tidal_assessment\data\1947ABE.txt"   
+#data1 = read_tidal_data(file_path1)
+#data2 = read_tidal_data(file_path2)
 
+#gauge_files = ['data/1946ABE.txt', 'data/1947ABE.txt']
 
-gauge_files = ['data/1946ABE.txt', 'data/1947ABE.txt']
+#data1 = read_tidal_data(gauge_files[1])
+#data2 = read_tidal_data(gauge_files[0])
 
-data1 = read_tidal_data(gauge_files[1])
-data2 = read_tidal_data(gauge_files[0])
-
-    
-
+file_path1 = r"C:\Users\Admin\Desktop\Coding\SEPwC_tidal_assessment\data\1946ABE.txt"
+file_path2 = r"C:\Users\Admin\Desktop\Coding\SEPwC_tidal_assessment\data\1947ABE.txt"   
+data1 = read_tidal_data(file_path1)
+data2 = read_tidal_data(file_path2)
 
 def join_data(data1, data2):
     #time column couldnt be found so instead of joining the data i am joining th ecolumns in eac hdata 
@@ -183,6 +189,24 @@ if __name__ == '__main__':
     args = parser.parse_args()
     dirname = args.directory
     verbose = args.verbose
+    
+    gauge_files = sorted([
+        os.path.join(dirname, f)
+        for f in os.listdir(dirname)
+        if f.endswith('.txt')
+        ])
+                      
+    if len(gauge_files) < 2:
+        raise ValueError("Need at least two .txt files in the directory to join data.")
+        
+    data1 = read_tidal_data(gauge_files[1])
+    data2 = read_tidal_data(gauge_files[0])
+    data = join_data(data1, data2)
+    
+    if verbose:
+        print(f"Read and Joined: {gauge_files[1]} + {gauge_files[0]}")
+        print(data.head())
+        
     
 
 
