@@ -40,7 +40,14 @@ def read_tidal_data(tidal_file):
         tidal_data = tidal_data.set_index('DateTime')
         tidal_data = tidal_data.sort_index()
         #if i 
+        #because of my persistent failure in joining due to apparent wrong columns
+        print(f"Preview of data from {tidal_file}:")
         print(tidal_data.head())
+        print("Data types:")
+        print(tidal_data.dtypes)
+        print("Column summary:")
+        print(tidal_data.describe(include='all'))
+
         return tidal_data
           
 
@@ -68,6 +75,19 @@ data2 = read_tidal_data(gauge_files[0])
 
 def join_data(data1, data2):
     #time column couldnt be found so instead of joining the data i am joining th ecolumns in eac hdata 
+    print("Columns in data1:", data1.columns.tolist())
+    print("Columns in data2:", data2.columns.tolist())
+
+    
+    cols_data1_not_in_data2 = set(data1.columns) - set(data2.columns)
+    cols_data2_not_in_data1 = set(data2.columns) - set(data1.columns)
+
+    if cols_data1_not_in_data2:
+        print("Columns in data1 but NOT in data2:", cols_data1_not_in_data2)
+    if cols_data2_not_in_data1:
+        print("Columns in data2 but NOT in data1:", cols_data2_not_in_data1)
+
+   ###
     if not set(data1.columns) == set(data2.columns):
         raise ValueError("input DataFrames have incompatable columns.")
     try:
@@ -78,6 +98,10 @@ def join_data(data1, data2):
     except Exception as e:
         print(f"Error joining dataframes: {e}")
         return None
+    
+    combined = pd.concat([data1, data2]).sort_index()
+    return combined
+
 if data1 is not None and data2 is not None:
     joined_data = join_data(data2, data1)
     if joined_data is not None:
@@ -87,6 +111,8 @@ if data1 is not None and data2 is not None:
         print("Failed to join data.")
 else:
     print("Failed to read one or both data files.")
+    
+    
     
 data = join_data(data1, data2)    
     
