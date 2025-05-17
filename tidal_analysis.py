@@ -75,21 +75,26 @@ data2 = read_tidal_data(gauge_files[0])
 
 def join_data(data1, data2):
     #time column couldnt be found so instead of joining the data i am joining th ecolumns in eac hdata 
-    print("Columns in data1:", data1.columns.tolist())
-    print("Columns in data2:", data2.columns.tolist())
-
     
-    cols_data1_not_in_data2 = set(data1.columns) - set(data2.columns)
-    cols_data2_not_in_data1 = set(data2.columns) - set(data1.columns)
-
-    if cols_data1_not_in_data2:
-        print("Columns in data1 but NOT in data2:", cols_data1_not_in_data2)
-    if cols_data2_not_in_data1:
-        print("Columns in data2 but NOT in data1:", cols_data2_not_in_data1)
+    data1.columns = [col.strip() for col in data1.columns]
+    data2.columns = [col.strip() for col in data2.columns]
+    
+    standard_columns = ['Cycle', 'Date', 'Time', 'ASLVZZ01', 'Residual', 'Sea Level']
+    try:
+        data1 = data1[standard_columns]
+        data2 = data2[standard_columns]
+    except KeyError as e:
+        missing = set(standard_columns) - set(data1.columns).union(data2.columns)
+        raise ValueError(f"Missing expected columns: {missing}") from e
+    
 
    ###
-    if not set(data1.columns) == set(data2.columns):
+    if not list(data1.columns) == list(data2.columns):
+        print("Data1 columns:", list(data1.columns))
+        print("Data2 columns:", list(data2.columns))
         raise ValueError("input DataFrames have incompatable columns.")
+    
+    
     try:
         
         joined_data = pd.concat([data1, data2])
