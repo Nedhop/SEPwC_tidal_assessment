@@ -12,6 +12,8 @@ import uptide
 import pytz
 import math
 import pytest 
+import scipy.stats 
+import typing
 
 def read_tidal_data(tidal_file):
     try:
@@ -48,7 +50,8 @@ def read_tidal_data(tidal_file):
             print(f"An unexpected error occurred: {e}")
             return None
         
-    
+
+
 gauge_files = ['data/1946ABE.txt', 'data/1947ABE.txt']
 
 data1 = read_tidal_data(gauge_files[1])
@@ -111,11 +114,32 @@ start_date = "19460115"
 end_date = "19470310"
 data_segment = extract_section_remove_mean(start_date, end_date, data)
 
+
+
+def sea_level_rise(data):
+    try:
+        if not isinstance(data.index, pd.DatetimeIndex):
+            raise ValueError("DataFrame index must be a DatetimeIndex")
+        time_in_seconds = (data.index - data.index[0]).total_seconds().values
+        sea_level = data['Sea Level'].values
+        
+        slope, intercept, r_value, p_value, std_err = scipy.stats.linregress(time_in_seconds, sea_level)
+        print(f"linear regression: slope = {slope}, p_value = {p_value}")
+        return slope, p_value   
+    except Exception as e:
+        print(f"Error in sea_level_rise: {e}")
+        return 0.0, 0.0
+
+    
+                                                     
+
         
 def tidal_analysis(data_segment, constituents, start_datetime):
      sea_level = data_segment['Sea Level'].values
      time_series = data_segment.index.to_pydatetime()
-     print(f"tidal_analysis input: data_segment = {data_segment}, constituents = {constituents}, start_datetime = {start_datetime}")
+     print(
+         f"tidal_analysis input: data_segment = {data_segment},"
+         f" constituents = {constituents}, start_datetime = {start_datetime}")
      try:
          model = uptide.fit(time_series, sea_level, constituents, lat=57)
          print(f"Uptide model: {model}")
@@ -133,10 +157,6 @@ constituents = ['M2', 'S2']
 
 
 
-def sea_level_rise(data):
-
-                                                     
-    return 
 
 
 
