@@ -124,10 +124,10 @@ def extract_section_remove_mean(start, end, data):
 #data1 = read_tidal_data(gauge_files[1])
 #data2 = read_tidal_data(gauge_files[0])
 
-file_path1 = r"C:\Users\Admin\Desktop\Coding\SEPwC_tidal_assessment\data\1946ABE.txt"
-file_path2 = r"C:\Users\Admin\Desktop\Coding\SEPwC_tidal_assessment\data\1947ABE.txt"   
-data1 = read_tidal_data(file_path1)
-data2 = read_tidal_data(file_path2)
+#file_path1 = r"C:\Users\Admin\Desktop\Coding\SEPwC_tidal_assessment\data\1946ABE.txt"
+#file_path2 = r"C:\Users\Admin\Desktop\Coding\SEPwC_tidal_assessment\data\1947ABE.txt"   
+#data1 = read_tidal_data(file_path1)
+#data2 = read_tidal_data(file_path2)
 
 
 def join_data(data1, data2):
