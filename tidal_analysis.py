@@ -24,21 +24,41 @@ def read_tidal_data(tidal_file):
 
         tidal_data = pd.read_csv(tidal_file, sep=r'\s+', skiprows=11, header=None)
         tidal_data.columns = ['Cycle', 'Date', 'Time', 'ASLVZZ01', 'Residual']
-        def clean_and_convert(value):
-                if isinstance(value, str):
-                    value = value.replace('M', '')
-                try:
-                    return float(value)
-                except ValueError:
-                    return np.nan
+        #def clean_and_convert(value):
+                #if isinstance(value, str):
+                    #tidal_data.replace(to_replace=".*M$",value={'A':np.nan},regex=True,inplace=True)
+                    #tidal_data.replace(to_replace=".*N$",value={'A':np.nan},regex=True,inplace=True)
+                    #tidal_data.replace(to_replace=".*T$",value={'A':np.nan},regex=True,inplace=True)
+                #try:
+                    #return float(value)
+                #except ValueError:
+                    #return np.nan
+        def clean(data,column_name):
+            data.replace(to_replace=".*M$",value={column_name:np.nan},regex=True,inplace=True)
+            data.replace(to_replace=".*N$",value={column_name:np.nan},regex=True,inplace=True)
+            data.replace(to_replace=".*T$",value={column_name:np.nan},regex=True,inplace=True)
+        return data
 
-        tidal_data['ASLVZZ01'] = tidal_data['ASLVZZ01'].apply(clean_and_convert)
-        tidal_data['Residual'] = tidal_data['Residual'].apply(clean_and_convert) 
+        tidal_data=clean(tidal_data,'ASLVZZ01')
+        tidal_data=clean(tidal_data,'Residual')
+        print(tidal_data)
+        
+        #tidal_data['ASLVZZ01'] = tidal_data['ASLVZZ01'].apply(clean_and_convert)
+        #tidal_data['Residual'] = tidal_data['Residual'].apply(clean_and_convert) 
+        #tidal_data.replace(to_replace=".*M$",value={'ASLVZZ01':np.nan},regex=True,inplace=True)
+        #tidal_data.replace(to_replace=".*N$",value={'ASLVZZ01':np.nan},regex=True,inplace=True)
+        #tidal_data.replace(to_replace=".*T$",value={'ASLVZZ01':np.nan},regex=True,inplace=True)
+        #tidal_data.replace(to_replace=".*M$",value={'Residual':np.nan},regex=True,inplace=True)
+        #tidal_data.replace(to_replace=".*N$",value={'Residual':np.nan},regex=True,inplace=True)
+        #tidal_data.replace(to_replace=".*T$",value={'Residual':np.nan},regex=True,inplace=True)
              
         tidal_data['Sea Level'] = tidal_data['ASLVZZ01'] + tidal_data['Residual']
         tidal_data['DateTime'] = pd.to_datetime(tidal_data['Date'] + ' ' + tidal_data['Time'], format='%Y/%m/%d %H:%M:%S')
         tidal_data = tidal_data.set_index('DateTime')
         tidal_data = tidal_data.sort_index()
+       
+        
+        
         #if i 
         #because of my persistent failure in joining due to apparent wrong columns
         print(f"Preview of data from {tidal_file}:")
@@ -99,15 +119,15 @@ def extract_section_remove_mean(start, end, data):
 #data1 = read_tidal_data(file_path1)
 #data2 = read_tidal_data(file_path2)
 
-gauge_files = ['data/1946ABE.txt', 'data/1947ABE.txt']
+#gauge_files = ['data/1946ABE.txt', 'data/1947ABE.txt']
 
-data1 = read_tidal_data(gauge_files[1])
-data2 = read_tidal_data(gauge_files[0])
+#data1 = read_tidal_data(gauge_files[1])
+#data2 = read_tidal_data(gauge_files[0])
 
-#file_path1 = r"C:\Users\Admin\Desktop\Coding\SEPwC_tidal_assessment\data\1946ABE.txt"
-#file_path2 = r"C:\Users\Admin\Desktop\Coding\SEPwC_tidal_assessment\data\1947ABE.txt"   
-#data1 = read_tidal_data(file_path1)
-#data2 = read_tidal_data(file_path2)
+file_path1 = r"C:\Users\Admin\Desktop\Coding\SEPwC_tidal_assessment\data\1946ABE.txt"
+file_path2 = r"C:\Users\Admin\Desktop\Coding\SEPwC_tidal_assessment\data\1947ABE.txt"   
+data1 = read_tidal_data(file_path1)
+data2 = read_tidal_data(file_path2)
 
 
 def join_data(data1, data2):
@@ -160,7 +180,7 @@ else:
     
     
     
-#data = join_data(data1, data2)    
+data = join_data(data1, data2)    
     
 
 
