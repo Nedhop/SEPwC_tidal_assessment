@@ -99,10 +99,10 @@ def extract_section_remove_mean(start, end, data):
 #data1 = read_tidal_data(file_path1)
 #data2 = read_tidal_data(file_path2)
 
-gauge_files = ['data/1946ABE.txt', 'data/1947ABE.txt']
+#gauge_files = ['data/1946ABE.txt', 'data/1947ABE.txt']
 
-data1 = read_tidal_data(gauge_files[1])
-data2 = read_tidal_data(gauge_files[0])
+#data1 = read_tidal_data(gauge_files[1])
+#data2 = read_tidal_data(gauge_files[0])
 
 #file_path1 = r"C:\Users\Admin\Desktop\Coding\SEPwC_tidal_assessment\data\1946ABE.txt"
 #file_path2 = r"C:\Users\Admin\Desktop\Coding\SEPwC_tidal_assessment\data\1947ABE.txt"   
@@ -148,19 +148,19 @@ def join_data(data1, data2):
     combined = pd.concat([data1, data2]).sort_index()
     return combined
 
-if data1 is not None and data2 is not None:
-    joined_data = join_data(data2, data1)
-    if joined_data is not None:
-        print("Joined Data:")
-        print(joined_data.head())
-    else:
-        print("Failed to join data.")
-else:
-    print("Failed to read one or both data files.")
+#if data1 is not None and data2 is not None:
+    #joined_data = join_data(data2, data1)
+    # joined_data is not None:
+        #print("Joined Data:")
+       # print(joined_data.head())
+    #els#e:
+        #print("Failed to join data.")
+#else:
+  #  print("Failed to read one or both data files.")
     
     
     
-data = join_data(data1, data2)    
+#data = join_data(data1, data2)    
     
 
 
@@ -244,16 +244,16 @@ if __name__ == '__main__':
     if len(gauge_files) < 2:
         raise ValueError("Need at least two .txt files in the directory to join data.")
         
-    data1 = read_tidal_data(gauge_files[1])
+    #data1 = read_tidal_data(gauge_files[1])
 
    
-    data2 = read_tidal_data(gauge_files[0])
+    #data2 = read_tidal_data(gauge_files[0])
 
-    data = join_data(data1, data2)
+    #data = join_data(data1, data2)
     
-    if verbose:
-        print(f"Read and Joined: {gauge_files[1]} + {gauge_files[0]}")
-        print(data.head())
+    #if verbose:
+       # print(f"Read and Joined: {gauge_files[1]} + {gauge_files[0]}")
+       # print(data.head())
         
     
 
