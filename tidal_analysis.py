@@ -46,13 +46,7 @@ def read_tidal_data(tidal_file):
                 #except ValueError:
                     #return np.nan
                     
-        def clean_and_convert(value):
-            if isinstance(value, str):
-                value = value.replace('M', 'np.nan').replace('N', 'np.nan').replace('T', 'np.nan')
-            try:
-                return float(value)
-            except ValueError:
-                return np.nan
+      
      
 
         #tidal_data=clean(tidal_data,'ASLVZZ01')
@@ -68,7 +62,7 @@ def read_tidal_data(tidal_file):
         #tidal_data.replace(to_replace=".*N$",value={'Residual':np.nan},regex=True,inplace=True)
         #tidal_data.replace(to_replace=".*T$",value={'Residual':np.nan},regex=True,inplace=True)
              
-        tidal_data['Sea Level'] = tidal_data['ASLVZZ01'] + tidal_data['Residual']
+        tidal_data['Sea Level'] = tidal_data['ASLVZZ01']
         tidal_data['DateTime'] = pd.to_datetime(tidal_data['Date'] + ' ' + tidal_data['Time'], format='%Y/%m/%d %H:%M:%S')
         tidal_data = tidal_data.set_index('DateTime')
         tidal_data = tidal_data.sort_index()
@@ -149,14 +143,14 @@ data2 = read_tidal_data(gauge_files[0])
 def join_data(data1, data2):
     #time column couldnt be found so instead of joining the data i am joining th ecolumns in eac hdata 
     
-    data1.columns = [col.strip() for col in data1.columns]
-    data2.columns = [col.strip() for col in data2.columns]
+    #data1.columns = [col.strip() for col in data1.columns]
+    #data2.columns = [col.strip() for col in data2.columns]
     
-    data2 = data2.loc["1946-01-01":"1946-12-31 23:00:00"]
-    data1 = data1.loc["1947-01-01":"1947-12-31 23:00:00"]
+    #data2 = data2.loc["1946-01-01":"1946-12-31 23:00:00"]
+    #data1 = data1.loc["1947-01-01":"1947-12-31 23:00:00"]
 
     
-    standard_columns = ['Cycle', 'Date', 'Time', 'ASLVZZ01', 'Residual', 'Sea Level']
+    standard_columns = ['Cycle', 'Date', 'Time', 'ASLVZZ01', 'Residual', 'Sea Level', 'DateTime']
     try:
         data1 = data1[standard_columns]
         data2 = data2[standard_columns]
