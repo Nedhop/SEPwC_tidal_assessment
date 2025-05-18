@@ -15,6 +15,13 @@ import pytest
 import scipy.stats 
 import typing
 
+#def clean(data,column_name):
+    #data.replace(to_replace=".*M$",value={column_name:np.nan},regex=True,inplace=True)
+    #data.replace(to_replace=".*N$",value={column_name:np.nan},regex=True,inplace=True)
+    #data.replace(to_replace=".*T$",value={column_name:np.nan},regex=True,inplace=True)
+    #return data
+
+
 def read_tidal_data(tidal_file):
     try:
         #since the text file is not in csv and has metadata at the start 
@@ -24,6 +31,11 @@ def read_tidal_data(tidal_file):
 
         tidal_data = pd.read_csv(tidal_file, sep=r'\s+', skiprows=11, header=None)
         tidal_data.columns = ['Cycle', 'Date', 'Time', 'ASLVZZ01', 'Residual']
+        
+        columns_to_clean = ['ASLVZZ01', 'Residual']
+        for column_name in columns_to_clean:
+            tidal_data.replace(to_replace=r'.*[MTN]$', value=np.nan, regex=True, inplace=True)
+            tidal_data[column_name] = pd.to_numeric(tidal_data[column_name], errors='coerce')
         #def clean_and_convert(value):
                 #if isinstance(value, str):
                     #tidal_data.replace(to_replace=".*M$",value={'A':np.nan},regex=True,inplace=True)
@@ -33,15 +45,19 @@ def read_tidal_data(tidal_file):
                     #return float(value)
                 #except ValueError:
                     #return np.nan
-        def clean(data,column_name):
-            data.replace(to_replace=".*M$",value={column_name:np.nan},regex=True,inplace=True)
-            data.replace(to_replace=".*N$",value={column_name:np.nan},regex=True,inplace=True)
-            data.replace(to_replace=".*T$",value={column_name:np.nan},regex=True,inplace=True)
-        return data
+                    
+        def clean_and_convert(value):
+            if isinstance(value, str):
+                value = value.replace('M', 'np.nan').replace('N', 'np.nan').replace('T', 'np.nan')
+            try:
+                return float(value)
+            except ValueError:
+                return np.nan
+     
 
-        tidal_data=clean(tidal_data,'ASLVZZ01')
-        tidal_data=clean(tidal_data,'Residual')
-        print(tidal_data)
+        #tidal_data=clean(tidal_data,'ASLVZZ01')
+        #tidal_data=clean(tidal_data,'Residual')
+        #print(tidal_data)
         
         #tidal_data['ASLVZZ01'] = tidal_data['ASLVZZ01'].apply(clean_and_convert)
         #tidal_data['Residual'] = tidal_data['Residual'].apply(clean_and_convert) 
