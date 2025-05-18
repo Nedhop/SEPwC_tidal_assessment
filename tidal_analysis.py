@@ -57,6 +57,38 @@ def read_tidal_data(tidal_file):
             print(f"An unexpected error occurred: {e}")
             return None
         
+        
+def extract_single_year_remove_mean(year, data):
+    if not isinstance(data.index, pd.DatetimeIndex):
+            raise ValueError("DataFrame index must be a DatetimeIndex")
+    year_data = data[data.index.year == int(year)].copy()
+    mean_sea_level = year_data['Sea Level'].mean()
+    year_data['Sea Level'] = year_data['Sea Level'] - mean_sea_level
+    return year_data
+  
+
+def extract_section_remove_mean(start, end, data):
+    if not isinstance(data.index, pd.DatetimeIndex):
+        raise ValueError("DataFrame index must be a DatetimeIndex")
+    try:
+        start_time = pd.to_datetime(start, format='%Y%m%d')
+        end_time = pd.to_datetime(end, format='%Y%m%d')
+        #the amount of data values is lower than expected so make sure all time are included
+        end_time = end_time + pd.Timedelta(hours=23, minutes=59, seconds=59)
+        section_data = data.loc[start_time:end_time].copy()
+        mean_sea_level = section_data['Sea Level'].mean()
+        section_data['Sea Level'] = section_data['Sea Level'] - mean_sea_level
+        return section_data
+    except KeyError:
+        raise KeyError(f"Date range '{start}' to '{end}' not found in data.")
+    except Exception as e:
+        raise Exception(f"An unexpected error occurred: {e}")
+#start_date = "19460115"
+#end_date = "19470310"
+#data_segment = extract_section_remove_mean(start_date, end_date, data)
+
+
+
 #when testing without gitbash to see where erros occur switch to
 #file_path1 = r"C:\Users\Admin\Desktop\Coding\SEPwC_tidal_assessment\data\1946ABE.txt"
 #file_path2 = r"C:\Users\Admin\Desktop\Coding\SEPwC_tidal_assessment\data\1947ABE.txt"   
@@ -72,6 +104,9 @@ data2 = read_tidal_data(gauge_files[0])
 #file_path2 = r"C:\Users\Admin\Desktop\Coding\SEPwC_tidal_assessment\data\1947ABE.txt"   
 #data1 = read_tidal_data(file_path1)
 #data2 = read_tidal_data(file_path2)
+
+data1 = data1.loc["1946-01-01":"1946-12-31 23:00:00"]
+data2 = data2.loc["1947-01-01":"1947-12-31 23:00:00"]
 
 def join_data(data1, data2):
     #time column couldnt be found so instead of joining the data i am joining th ecolumns in eac hdata 
@@ -121,35 +156,8 @@ else:
     
 data = join_data(data1, data2)    
     
-def extract_single_year_remove_mean(year, data):
-    if not isinstance(data.index, pd.DatetimeIndex):
-            raise ValueError("DataFrame index must be a DatetimeIndex")
-    year_data = data[data.index.year == int(year)].copy()
-    mean_sea_level = year_data['Sea Level'].mean()
-    year_data['Sea Level'] = year_data['Sea Level'] - mean_sea_level
-    return year_data
-  
 
 
-def extract_section_remove_mean(start, end, data):
-    if not isinstance(data.index, pd.DatetimeIndex):
-        raise ValueError("DataFrame index must be a DatetimeIndex")
-    try:
-        start_time = pd.to_datetime(start, format='%Y%m%d')
-        end_time = pd.to_datetime(end, format='%Y%m%d')
-        #the amount of data values is lower than expected so make sure all time are included
-        end_time = end_time + pd.Timedelta(hours=23, minutes=59, seconds=59)
-        section_data = data.loc[start_time:end_time].copy()
-        mean_sea_level = section_data['Sea Level'].mean()
-        section_data['Sea Level'] = section_data['Sea Level'] - mean_sea_level
-        return section_data
-    except KeyError:
-        raise KeyError(f"Date range '{start}' to '{end}' not found in data.")
-    except Exception as e:
-        raise Exception(f"An unexpected error occurred: {e}")
-start_date = "19460115"
-end_date = "19470310"
-data_segment = extract_section_remove_mean(start_date, end_date, data)
 
 
 
