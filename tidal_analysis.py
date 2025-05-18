@@ -62,6 +62,8 @@ def extract_single_year_remove_mean(year, data):
     if not isinstance(data.index, pd.DatetimeIndex):
             raise ValueError("DataFrame index must be a DatetimeIndex")
     year_data = data[data.index.year == int(year)].copy()
+    if year_data.empty:
+        return year_data
     mean_sea_level = year_data['Sea Level'].mean()
     year_data['Sea Level'] = year_data['Sea Level'] - mean_sea_level
     return year_data
@@ -76,6 +78,8 @@ def extract_section_remove_mean(start, end, data):
         #the amount of data values is lower than expected so make sure all time are included
         end_time = end_time + pd.Timedelta(hours=23, minutes=59, seconds=59)
         section_data = data.loc[start_time:end_time].copy()
+        if section_data.empty:
+            return section_data
         mean_sea_level = section_data['Sea Level'].mean()
         section_data['Sea Level'] = section_data['Sea Level'] - mean_sea_level
         return section_data
@@ -112,8 +116,8 @@ def join_data(data1, data2):
     data1.columns = [col.strip() for col in data1.columns]
     data2.columns = [col.strip() for col in data2.columns]
     
-    data1 = data1.loc["1946-01-01":"1946-12-31 23:00:00"]
-    data2 = data2.loc["1947-01-01":"1947-12-31 23:00:00"]
+    #data1 = data1.loc["1946-01-01":"1946-12-31 23:00:00"]
+    #data2 = data2.loc["1947-01-01":"1947-12-31 23:00:00"]
 
     
     standard_columns = ['Cycle', 'Date', 'Time', 'ASLVZZ01', 'Residual', 'Sea Level']
@@ -245,7 +249,7 @@ if __name__ == '__main__':
    
     data2 = read_tidal_data(gauge_files[0])
 
-    joined_data = join_data(data1, data2)
+    data = join_data(data1, data2)
     
     if verbose:
         print(f"Read and Joined: {gauge_files[1]} + {gauge_files[0]}")
