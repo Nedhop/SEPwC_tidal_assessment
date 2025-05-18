@@ -105,14 +105,16 @@ data2 = read_tidal_data(gauge_files[0])
 #data1 = read_tidal_data(file_path1)
 #data2 = read_tidal_data(file_path2)
 
-data1 = data1.loc["1946-01-01":"1946-12-31 23:00:00"]
-data2 = data2.loc["1947-01-01":"1947-12-31 23:00:00"]
 
 def join_data(data1, data2):
     #time column couldnt be found so instead of joining the data i am joining th ecolumns in eac hdata 
     
     data1.columns = [col.strip() for col in data1.columns]
     data2.columns = [col.strip() for col in data2.columns]
+    
+    data1 = data1.loc["1946-01-01":"1946-12-31 23:00:00"]
+    data2 = data2.loc["1947-01-01":"1947-12-31 23:00:00"]
+
     
     standard_columns = ['Cycle', 'Date', 'Time', 'ASLVZZ01', 'Residual', 'Sea Level']
     try:
@@ -239,8 +241,11 @@ if __name__ == '__main__':
         raise ValueError("Need at least two .txt files in the directory to join data.")
         
     data1 = read_tidal_data(gauge_files[1])
+
+   
     data2 = read_tidal_data(gauge_files[0])
-    data = join_data(data1, data2)
+
+    joined_data = join_data(data1, data2)
     
     if verbose:
         print(f"Read and Joined: {gauge_files[1]} + {gauge_files[0]}")
