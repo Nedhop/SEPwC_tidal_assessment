@@ -4,6 +4,7 @@
 import argparse
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib.dates 
 import datetime
 import wget
 import os
@@ -12,7 +13,7 @@ import uptide
 import pytz
 import math
 import pytest 
-import scipy.stats 
+import scipy
 import typing
 
 #def clean(data,column_name):
@@ -62,7 +63,7 @@ def read_tidal_data(tidal_file):
         #tidal_data.replace(to_replace=".*N$",value={'Residual':np.nan},regex=True,inplace=True)
         #tidal_data.replace(to_replace=".*T$",value={'Residual':np.nan},regex=True,inplace=True)
              
-        tidal_data['Sea Level'] = tidal_data['ASLVZZ01']
+        tidal_data = tidal_data.rename(columns={'ASLVZZ01': 'Sea Level'})
         tidal_data['DateTime'] = pd.to_datetime(tidal_data['Date'] + ' ' + tidal_data['Time'], format='%Y/%m/%d %H:%M:%S')
         tidal_data = tidal_data.set_index('DateTime')
         tidal_data = tidal_data.sort_index()
@@ -77,6 +78,8 @@ def read_tidal_data(tidal_file):
         print(tidal_data.dtypes)
         print("Column summary:")
         print(tidal_data.describe(include='all'))
+        
+        #data["Sea Level"]=data["Sea Level"].astype(float)
 
         return tidal_data
           
@@ -150,7 +153,7 @@ def join_data(data1, data2):
     #data1 = data1.loc["1947-01-01":"1947-12-31 23:00:00"]
 
     #join test continues to fail in the test because the test removes it 
-    standard_columns = ['Cycle', 'Date', 'Time', 'ASLVZZ01', 'Residual', 'Sea Level']
+    standard_columns = ['Cycle', 'Date', 'Time', 'Sea Level', 'Residual']
     try:
         data1 = data1[standard_columns]
         data2 = data2[standard_columns]
@@ -169,7 +172,9 @@ def join_data(data1, data2):
     try:
         
         joined_data = pd.concat([data1, data2])
+        #joined_data.dropna(subset=["Sea Level"], inplace=True)
         joined_data = joined_data.sort_index()
+        
         return joined_data
     except Exception as e:
         print(f"Error joining dataframes: {e}")
@@ -188,18 +193,61 @@ def join_data(data1, data2):
 
 
 def sea_level_rise(data):
+    
+    
+    
+    slope = 0.0 
+    p_value = 0.0
+    
+    data = data.dropna(subset=["Sea Level"])
+    
     try:
         if not isinstance(data.index, pd.DatetimeIndex):
             raise ValueError("DataFrame index must be a DatetimeIndex")
-        time_in_seconds = (data.index - data.index[0]).total_seconds().values
+        if 'Sea Level' not in data.columns:
+            raise KeyError("DataFrame must contain a 'Sea Level' column.")
+        if data.empty:
+            print("warning: Input DataFrame is empty.")
+            return slope, p_value
+        
+        #time_in_seconds = matplotlib.dates.date2num(data.index)
+        time_in_seconds = matplotlib.dates.date2num(data.index)
         sea_level = data['Sea Level'].values
         
-        slope, intercept, r_value, p_value, std_err = scipy.stats.linregress(time_in_seconds, sea_level)
-        print(f"linear regression: slope = {slope}, p_value = {p_value}")
-        return slope, p_value   
-    except Exception as e:
+        
+        
+        
+        if len(time_in_seconds) < 2:
+            return slope, p_value
+        if np.all(sea_level == sea_level[0]):
+            return slope, p_value
+        
+        x_value = time_in_seconds
+        y_value = sea_level
+            
+        try:
+            slope, intercept, r_value, p_value, std_err = scipy.stats.linregress(x_value, y_value)
+        except Exception as e:
+            raise RuntimeError(f"Error during linear regression: {e}")
+            
+        if np.isnan(slope):
+            return 0.0, 0.0
+        
+        return slope, p_value
+    
+    except (TypeError, ValueError, KeyError, RuntimeError) as e:
         print(f"Error in sea_level_rise: {e}")
-        return 0.0, 0.0
+        return slope, p_value  
+
+    except Exception as e:
+        print(f"Unexpected error in sea_level_rise: {e}")
+        return slope, p_value
+    
+    
+            
+            
+        
+       
 
     
                                                      
@@ -208,21 +256,16 @@ def sea_level_rise(data):
 def tidal_analysis(data_segment, constituents, start_datetime):
      sea_level = data_segment['Sea Level'].values
      time_series = data_segment.index.to_pydatetime()
-     print(
-         f"tidal_analysis input: data_segment = {data_segment},"
-         f" constituents = {constituents}, start_datetime = {start_datetime}")
-     try:
-         model = uptide.fit(time_series, sea_level, constituents, lat=57)
-         print(f"Uptide model: {model}")
-         amp = model.amplitude
-         pha = model.phase
-         print(f"tidal_analysis output: amplitude = {amp}, phase = {pha}")
-         return amp, pha
-     except Exception as e:
-         print(f"Error in tidal_analysis: {e}")
-         return [0.0, 0.0], [0.0, 0.0] 
+     
+     tide = uptide.Tides(constituents)
+     tide.set_initial_time(start_datetime)
+     
+     
+     amp, pha = uptide.harmonic_analysis(tide, sea_level, time_series)
+     return amp, pha
+         
 
-constituents = ['M2', 'S2']
+
 
 
 
