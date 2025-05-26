@@ -31,7 +31,11 @@ def read_tidal_data(tidal_file):
             tidal_data.replace(to_replace=r'.*[MTN]$', value=np.nan, regex=True, inplace=True)
             tidal_data[column_name] = pd.to_numeric(tidal_data[column_name], errors='coerce')
         tidal_data = tidal_data.rename(columns={'ASLVZZ01': 'Sea Level'})
-        tidal_data['DateTime'] = pd.to_datetime(tidal_data['Date'] + ' ' + tidal_data['Time'], format='%Y/%m/%d %H:%M:%S')
+        tdatetime = tidal_data['Date'] + ' ' + tidal_data['Time']
+        dtformat = '%Y/%m/%d %H:%M:%S'
+        tidal_data['DateTime'] = pd.to_datetime(tdatetime, format=dtformat)
+        tidal_data['DateTimeString'] = tidal_data['DateTime']
+        tidal_data = tidal_data.drop(columns=['Cycle', 'Date','Residual'])
         tidal_data = tidal_data.set_index('DateTime')
         tidal_data = tidal_data.sort_index()
         #if i
@@ -50,14 +54,15 @@ def read_tidal_data(tidal_file):
         print(f"An unexpected error occurred: {e}")
         return None
 def extract_single_year_remove_mean(year, data):
-    if not isinstance(data.index, pd.DatetimeIndex):
-        raise ValueError("DataFrame index must be a DatetimeIndex")
-    year_data = data[data.index.year == int(year)].copy()
-    if year_data.empty:
-        return year_data
-    mean_sea_level = year_data['Sea Level'].mean()
-    year_data['Sea Level'] = year_data['Sea Level'] - mean_sea_level
+    year_string_start = str(year)+"0101"
+    year_string_end = str(year)+"1231"
+    year_data = data.loc[year_string_start:year_string_end, ['Sea Level']]
+    # remove mean to oscillate around zero
+    mmm = np.mean(year_data['Sea Level'])
+    year_data['Sea Level'] -= mmm
+
     return year_data
+
 def extract_section_remove_mean(start, end, data):
     if not isinstance(data.index, pd.DatetimeIndex):
         raise ValueError("DataFrame index must be a DatetimeIndex")
@@ -97,7 +102,7 @@ def extract_section_remove_mean(start, end, data):
 #data1 = read_tidal_data(file_path1)
 #data2 = read_tidal_data(file_path2)
 def join_data(data1, data2):
-    #time column couldnt be found so instead of joining the data 
+    #time column couldnt be found so instead of joining the data
     #i am joining th ecolumns in eac hdata
     #data1.columns = [col.strip() for col in data1.columns]
     #data2.columns = [col.strip() for col in data2.columns]
