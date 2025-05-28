@@ -20,6 +20,12 @@ import typing
     #data.replace(to_replace=".*T$",value={column_name:np.nan},regex=True,inplace=True)
     #return data
 def read_tidal_data(tidal_file):
+    """
+    Reads the tidal data from a text file and converts/cleans it into a
+    usable data frame 
+    
+    """
+    
     try:
         #since the text file is not in csv and has metadata at the start
         #it will have to skip the first rows and have each columns named
@@ -54,16 +60,21 @@ def read_tidal_data(tidal_file):
         print(f"An unexpected error occurred: {e}")
         return None
 def extract_single_year_remove_mean(year, data):
+    """
+    calculates the mean from  the selcted year and subtracts 
+    it from the data
+    """
     year_string_start = str(year)+"0101"
     year_string_end = str(year)+"1231"
     year_data = data.loc[year_string_start:year_string_end, ['Sea Level']]
-    # remove mean to oscillate around zero
     mmm = np.mean(year_data['Sea Level'])
     year_data['Sea Level'] -= mmm
-
     return year_data
-
 def extract_section_remove_mean(start, end, data):
+    """
+    instead of just the data from a year this does the same proccess but
+    for a specific time period
+    """
     if not isinstance(data.index, pd.DatetimeIndex):
         raise ValueError("DataFrame index must be a DatetimeIndex")
     try:
@@ -82,41 +93,12 @@ def extract_section_remove_mean(start, end, data):
         raise KeyError(f"Date range '{start}' to '{end}' not found in data.")
     except Exception as e:
         raise Exception(f"An unexpected error occurred: {e}")
-#start_date = "19460115"
-#end_date = "19470310"
-#data_segment = extract_section_remove_mean(start_date, end_date, data)
-#when testing without gitbash to see where erros occur switch to
-#file_path1 = r"C:\Users\Admin\Desktop\Coding\SEPwC_tidal_assessment\data\
-    #1946ABE.txt"
-#file_path2 = r"C:\Users\Admin\Desktop\Coding\SEPwC_tidal_assessment\data\
-    #1947ABE.txt"
-#data1 = read_tidal_data(file_path1)
-#data2 = read_tidal_data(file_path2)
-#gauge_files = ['data/1946ABE.txt', 'data/1947ABE.txt']
-#data1 = read_tidal_data(gauge_files[1])
-#data2 = read_tidal_data(gauge_files[0])
-#file_path1 = r"C:\Users\Admin\Desktop\Coding\SEPwC_tidal_assessment\
-    #data\1946ABE.txt"
-#file_path2 = r"C:\Users\Admin\Desktop\Coding\SEPwC_tidal_assessment\
-    #data\1947ABE.txt"
-#data1 = read_tidal_data(file_path1)
-#data2 = read_tidal_data(file_path2)
 def join_data(data1, data2):
-    #time column couldnt be found so instead of joining the data
-    #i am joining th ecolumns in eac hdata
-    #data1.columns = [col.strip() for col in data1.columns]
-    #data2.columns = [col.strip() for col in data2.columns]
-    #data2 = data2.loc["1946-01-01":"1946-12-31 23:00:00"]
-    #data1 = data1.loc["1947-01-01":"1947-12-31 23:00:00"]
-    #join test continues to fail in the test because the test removes it
-    #standard_columns = ['Cycle', 'Date', 'Time', 'Sea Level', 'Residual']
-    #if not list(data1.columns) == list(data2.columns):
-        #print("Data1 columns:", list(data1.columns))
-        #print("Data2 columns:", list(data2.columns))
-        #raise ValueError("input DataFrames have incompatable columns.")
+    """
+    this function combines two different data frames into one
+    """
     try:
-        joined_data = pd.concat([data2, data1])
-        #joined_data.dropna(subset=["Sea Level"], inplace=True)
+        joined_data = pd.concat([data1, data2])
         joined_data = joined_data.sort_index()
         return joined_data
     except Exception as e:
@@ -126,49 +108,80 @@ def join_data(data1, data2):
     #return combined
 #data = join_data(data1, data2)
 def sea_level_rise(data):
-    slope = 0.0
-    p_value = 0.0
-    data = data.dropna(subset=["Sea Level"])
-    try:
-        if not isinstance(data.index, pd.DatetimeIndex):
-            raise ValueError("DataFrame index must be a DatetimeIndex")
-        if 'Sea Level' not in data.columns:
-            raise KeyError("DataFrame must contain a 'Sea Level' column.")
-        if data.empty:
-            print("warning: Input DataFrame is empty.")
-            return slope, p_value
-        #time_in_seconds = matplotlib.dates.date2num(data.index)
-        time_in_seconds = matplotlib.dates.date2num(data.index)
-        sea_level = data['Sea Level'].values
-        if len(time_in_seconds) < 2:
-            return slope, p_value
-        if np.all(sea_level == sea_level[0]):
-            return slope, p_value
-        x_value = time_in_seconds
-        y_value = sea_level
-        try:
-            slope, intercept, r_value, p_value, std_err = scipy.stats.linregress(x_value, y_value)
-        except Exception as e:
-            raise RuntimeError(f"Error during linear regression: {e}")
-        if np.isnan(slope):
-            return 0.0, 0.0
-        return slope, p_value
-    except (TypeError, ValueError, KeyError, RuntimeError) as e:
-        print(f"Error in sea_level_rise: {e}")
-        return slope, p_value
-    except Exception as e:
-        print(f"Unexpected error in sea_level_rise: {e}")
-        return slope, p_value
+    """
+    This function takes the time and sea level data and shows the 
+    relationship/slope between the two in the from of linear regression
+    a consistant error i have faced is a fail due ot being 0.1 off the 
+    desired value
+    """
+    data.dropna(axis = 0, how = 'any', subset=['Sea Level'], inplace = True)
+    x = matplotlib.dates.date2num(data.index.to_pydatetime()) 
+    y = data['Sea Level'].values
+    slope, _, _, p_value, _ = scipy.stats.linregress(x, y)
+    return slope, p_value
 def tidal_analysis(data_segment, constituents, start_datetime):
+    """
+    this function uses harminic analysis to show the aplitude and phases of 
+    tidal consituents for a specifc segmentof data
+    """
+    df = data_segment.dropna(subset=['Sea Level'])
+    if df.empty:
+        print("No Sea Level data available for tidal analysis.")
+        return [], []
+    data_segment.dropna(axis = 0, how = 'any', subset=['Sea Level'], inplace = True)
     sea_level = data_segment['Sea Level'].values
-    time_series = data_segment.index.to_pydatetime()
     tide = uptide.Tides(constituents)
     tide.set_initial_time(start_datetime)
-    amp, pha = uptide.harmonic_analysis(tide, sea_level, time_series)
+    print(tide)
+    print(sea_level)
+    seconds_since = (data_segment.index.astype('int64').to_numpy()/1e9) - start_datetime.timestamp()
+    amp,pha = uptide.harmonic_analysis(tide, data_segment['Sea Level'].to_numpy(), seconds_since)
     return amp, pha
+
+def find_longest_contiguous_block(df, timestamp_col='timestamp', freq_minutes=15):
+    """
+    this function find the longest continous section of data within a
+    specified date frame
+    """
+    print(df)
+    df.dropna(axis = 0, how = 'any', subset=['Sea Level'], inplace = True)
+    # Ensure datetime and sort
+    df = df.copy()
+    df[timestamp_col] = pd.to_datetime(df[timestamp_col])
+    df = df.sort_values(by=timestamp_col).reset_index(drop=True)
+    print(df)
+
+    expected_delta = pd.Timedelta(minutes=freq_minutes)
+    longest_start, longest_len = 0, 1
+    current_start, current_len = 0, 1
+
+    for i in range(1, len(df)):
+        delta = df.loc[i, timestamp_col] - df.loc[i-1, timestamp_col]
+        if delta == expected_delta:
+            current_len += 1
+        else:
+            if current_len > longest_len:
+                longest_start, longest_len = current_start, current_len
+            current_start = i
+            current_len = 1
+    # Final check after loop
+    if current_len > longest_len:
+        longest_start, longest_len = current_start, current_len
+
+    return df.iloc[longest_start:longest_start + longest_len].reset_index(drop=True)
+
 def get_longest_contiguous_data(data):
-    return
+    """
+    this function returns the datetimestring column back into Datetime
+    for the longest continouos section of data 
+    """
+    df=find_longest_contiguous_block(data, timestamp_col='DateTimeString', freq_minutes=15)
+    return df
 if __name__ == '__main__':
+    """
+    #The program should print the tidal data, the sea-level rise and the longest contiguous period of data (i.e. without any missing data) from the data loaded.
+    
+    """
     parser = argparse.ArgumentParser(
                      prog="UK Tidal analysis",
                      description="Calculate tidal constiuents and RSL from tide gauge data",
@@ -182,19 +195,111 @@ if __name__ == '__main__':
                     help="Print progress")
     args = parser.parse_args()
     dirname = args.directory
-    verbose = args.verbose
-    gauge_files = sorted([
-        os.path.join(dirname, f)
-        for f in os.listdir(dirname)
-        if f.endswith('.txt')
-        ])
-    if len(gauge_files) < 2:
-        raise ValueError("Need at least two .txt files in the directory to join data.")
+    verbose = args.verbose 
+#linear regression test
+    gauge_files = ['data/1946ABE.txt', 'data/1947ABE.txt']
     data1 = read_tidal_data(gauge_files[1])
+    print(data1)
     data2 = read_tidal_data(gauge_files[0])
     data = join_data(data1, data2)
-    if verbose:
-        print(f"Read and Joined: {gauge_files[1]} + {gauge_files[0]}")
-        print(data.head())
-        print(data.tail())
-        
+    print(data1)
+    print('=========')
+    slope, p_value = sea_level_rise(data)
+    print(slope,p_value)
+    print(data1)
+    print(data1.index)
+    year=2000
+    for file in os.listdir(dirname):
+        if file.endswith(".txt"):
+            thisfile = os.path.join(dirname, file)
+            thisdata = read_tidal_data(thisfile)
+            #test the file has actual data
+            df = thisdata.dropna(subset=['Sea Level'])
+            if df.empty:
+                print("No Sea Level data available for tidal analysis.(2019 Dover)")
+                continue
+            #https://github.com/jhill1/SEPwC_tidal_assessment
+            print(thisfile)
+            print("linear regression on sea level (rise)")
+            slope, p_value = sea_level_rise(thisdata)
+            print("slope,p value")
+            print(slope,p_value)
+            print("================")
+            #contiguous?
+            constituents  = ['M2', 'S2']
+            tide = uptide.Tides(constituents)
+            tz = pytz.timezone("UTC")
+            newdf=thisdata
+            print(newdf.index[0])
+            newdf=thisdata
+            print("newdf")
+            print(newdf)
+            newdf = newdf.set_index('DateTimeString')
+            newdf = newdf.sort_index()
+            print("newdf")
+            print(newdf)
+            tide.set_initial_time(datetime.datetime(year,1,1,0,0,0))
+            seconds_since = (newdf.index.astype('int64').to_numpy()/1e9) - datetime.datetime(year,1,1,0,0,0,tzinfo=tz).timestamp()
+            amp,pha = uptide.harmonic_analysis(tide, newdf['Sea Level'].to_numpy(), seconds_since)
+            print(constituents)
+            print("amplitutde")
+            print(amp)
+            print("phase")
+            print(pha)
+            #import sys
+            #sys.exit()
+            if year==2000:
+                alldata = thisdata
+                year=year+1
+            else:
+                alldata = join_data(alldata,thisdata)
+    print("Now we calculate for all data")
+    print(alldata)
+    slope, p_value = sea_level_rise(alldata)
+    print("slope,p value")
+    print(slope,p_value)
+    print("================")
+    print("contiguous data")
+    df=find_longest_contiguous_block(alldata, timestamp_col='DateTimeString', freq_minutes=15)
+    df['DateTime'] = pd.to_datetime(df['DateTimeString'] , format='%Y/%m/%d %H:%M:%S')
+    df = df.set_index('DateTime')
+    df = df.sort_index()
+    print(df)
+    newdf = df #make a copy for M2 S2
+    slope, p_value = sea_level_rise(df)
+    print("slope,p value")
+    print(slope,p_value)
+    print("================")
+    #need to do it for all data
+    newdf=alldata
+    # Moving back to Fort Denison
+    constituents  = ['M2', 'S2']
+    tide = uptide.Tides(constituents)
+    tz = pytz.timezone("UTC")
+    print(newdf.index[0])
+    #import sys
+    #sys.exit()
+    print("newdf")
+    print(newdf)
+    newdf = newdf.set_index('DateTimeString')
+    newdf = newdf.sort_index()
+    print("newdf")
+    print(newdf)
+    tide.set_initial_time(datetime.datetime(2000,1,1,0,0,0))
+    seconds_since = (newdf.index.astype('int64').to_numpy()/1e9) - datetime.datetime(2000,1,1,0,0,0,tzinfo=tz).timestamp()
+    amp,pha = uptide.harmonic_analysis(tide, newdf['Sea Level'].to_numpy(), seconds_since)
+    print(constituents)
+    print("amplitude")
+    print(amp)
+    print("phase")
+    print(pha)
+    #now make index of datetimestring
+    #df['DateTime'] = pd.to_datetime(df['DateTimeString'] , format='%Y/%m/%d %H:%M:%S')
+    #df = df.set_index('DateTime')
+    #df = df.sort_index()
+    #print(df)
+    #data is good.
+    #now sea level rise
+    #slope, p_value = sea_level_rise(df)
+    #print(slope,p_value)
+    #The program should print the tidal data, the sea-level rise and the longest contiguous period of data (i.e. without any missing data) from the data loaded.
