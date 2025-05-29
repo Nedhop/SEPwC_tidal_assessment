@@ -39,95 +39,91 @@ def read_tidal_data(tidal_file):
     print(tidal_data.describe(include='all'))
     return tidal_data
 
-def extract_single_year_remove_mean(year, data):
+def extract_single_year_remove_mean(year, esy_data):
     """
     calculates the mean from  the selcted year and subtracts 
     it from the data
     """
     year_string_start = str(year)+"0101"
     year_string_end = str(year)+"1231"
-    year_data = data.loc[year_string_start:year_string_end, ['Sea Level']]
+    year_data = esy_data.loc[year_string_start:year_string_end, ['Sea Level']]
     mmm = np.mean(year_data['Sea Level'])
     year_data['Sea Level'] -= mmm
     return year_data
-def extract_section_remove_mean(start, end, data):
+def extract_section_remove_mean(start, end, es_data):
     """
     instead of just the data from a year this does the same proccess but
     for a specific time period
     """
-    if not isinstance(data.index, pd.DatetimeIndex):
+    if not isinstance(es_data.index, pd.DatetimeIndex):
         raise ValueError("DataFrame index must be a DatetimeIndex")
 
     start_time = pd.to_datetime(start, format='%Y%m%d')
     end_time = pd.to_datetime(end, format='%Y%m%d')
     end_time = end_time + pd.Timedelta(hours=23, minutes=59, seconds=59)
-    section_data = data.loc[start_time:end_time].copy()
+    section_data = es_data.loc[start_time:end_time].copy()
     if section_data.empty:
         return section_data
     mean_sea_level = section_data['Sea Level'].mean()
     section_data['Sea Level'] = section_data['Sea Level'] - mean_sea_level
     return section_data
-def join_data(data1, data2):
+def join_data(dataset1, dataset2):
     """
     this function combines two different data frames into one
     """
-    try:
-        joined_data = pd.concat([data1, data2])
-        joined_data = joined_data.sort_index()
-        return joined_data
-    except Exception as err:
-        print(f"Error joining dataframes: {err}")
-        return None
-def sea_level_rise(data):
+    joined_data = pd.concat([dataset1, dataset2])
+    joined_data = joined_data.sort_index()
+    return joined_data
+def sea_level_rise(tidaldata):
     """
     This function takes the time and sea level data and shows the 
     relationship/slope between the two in the from of linear regression
     a consistant error i have faced is a fail due ot being 0.1 off the 
     desired value
     """
-    data.dropna(axis = 0, how = 'any', subset=['Sea Level'], inplace = True)
+    tidaldata.dropna(axis = 0, how = 'any', subset=['Sea Level'], inplace = True)
     #x = matplotlib.dates.date2num(data.index.to_pydatetime())
     #y = data['Sea Level'].values
-    slope, _, _, p_value, _ = scipy.stats.linregress(
-        matplotlib.dates.date2num(data.index.to_pydatetime()), data['Sea Level'].values)
-    return slope, p_value
-def tidal_analysis(data_segment, constituents, start_datetime):
+    slr_slope, _, _, slr_p_value, _ = scipy.stats.linregress(
+        matplotlib.dates.date2num(tidaldata.index.to_pydatetime()), data['Sea Level'].values)
+    return slr_slope, slr_p_value
+def tidal_analysis(data_segment, cons, start_datetime):
     """
     this function uses harminic analysis to show the aplitude and phases of 
     tidal consituents for a specifc segmentof data
     """
-    df = data_segment.dropna(subset=['Sea Level'])
-    if df.empty:
+    if data_segment.dropna(subset=['Sea Level']).empty:
         print("No Sea Level data available for tidal analysis.")
         return [], []
     data_segment.dropna(axis = 0, how = 'any', subset=['Sea Level'], inplace = True)
     sea_level = data_segment['Sea Level'].values
-    tide = uptide.Tides(constituents)
-    tide.set_initial_time(start_datetime)
-    print(tide)
+    ta_tide = uptide.Tides(cons)
+    ta_tide.set_initial_time(start_datetime)
+    print(ta_tide)
     print(sea_level)
-    seconds_since = (data_segment.index.astype('int64').to_numpy()/1e9) - start_datetime.timestamp()
-    amp,pha = uptide.harmonic_analysis(tide, data_segment['Sea Level'].to_numpy(), seconds_since)
-    return amp, pha
+    #ss seconds since
+    ta_ss = (data_segment.index.astype('int64').to_numpy()/1e9) - start_datetime.timestamp()
+    ta_amp,ta_pha = uptide.harmonic_analysis(ta_tide, data_segment['Sea Level'].to_numpy(), ta_ss)
+    return ta_amp, ta_pha
 
-def find_longest_contiguous_block(df, timestamp_col='timestamp', freq_minutes=15):
+def find_longest_contiguous_block(lcb_df, timestamp_col='timestamp', freq_minutes=15):
     """
     this function find the longest continous section of data within a
     specified date frame
     """
-    print(df)
-    df.dropna(axis = 0, how = 'any', subset=['Sea Level'], inplace = True)
-    df = df.copy()
-    df[timestamp_col] = pd.to_datetime(df[timestamp_col])
-    df = df.sort_values(by=timestamp_col).reset_index(drop=True)
-    print(df)
+    print(lcb_df)
+    lcb_df.dropna(axis = 0, how = 'any', subset=['Sea Level'], inplace = True)
+    lcb_df = lcb_df.copy()
+    lcb_df[timestamp_col] = pd.to_datetime(lcb_df[timestamp_col])
+    lcb_df = lcb_df.sort_values(by=timestamp_col).reset_index(drop=True)
+    print(lcb_df)
 
     expected_delta = pd.Timedelta(minutes=freq_minutes)
     longest_start, longest_len = 0, 1
     current_start, current_len = 0, 1
 
-    for i in range(1, len(df)):
-        delta = df.loc[i, timestamp_col] - df.loc[i-1, timestamp_col]
+    for i in range(1, len(lcb_df)):
+        delta = lcb_df.loc[i, timestamp_col] - lcb_df.loc[i-1, timestamp_col]
         if delta == expected_delta:
             current_len += 1
         else:
@@ -137,23 +133,20 @@ def find_longest_contiguous_block(df, timestamp_col='timestamp', freq_minutes=15
             current_len = 1
     if current_len > longest_len:
         longest_start, longest_len = current_start, current_len
-    return df.iloc[longest_start:longest_start + longest_len].reset_index(drop=True)
-def get_longest_contiguous_data(data):
+    return lcb_df.iloc[longest_start:longest_start + longest_len].reset_index(drop=True)
+def get_longest_contiguous_data(lc_data):
     """
     this function returns the datetimestring column back into Datetime
     for the longest continouos section of data 
     """
-    df=find_longest_contiguous_block(data, timestamp_col='DateTimeString', freq_minutes=15)
-    return df
+    return find_longest_contiguous_block(lc_data, timestamp_col='DateTimeString', freq_minutes=15)
 if __name__ == '__main__':
-    """
-    The program should print the tidal data, sea level rise and longest
-    contiguous period of data for the dat pss through it, it adds each year of data
-    to the total data as it sorts each one until it has every year within it.
-    i faced a consistent error with dover so my code ignores the last year 
-    as it was fualty, plus the test fails because it has python3 instead
-    of just python
-    """
+    #The program should print the tidal data, sea level rise and longest
+    #contiguous period of data for the dat pss through it, it adds each year of data
+    #to the total data as it sorts each one until it has every year within it.
+    #i faced a consistent error with dover so my code ignores the last year
+    #as it was fualty, plus the test fails because it has python3 instead
+    #of just python
     parser = argparse.ArgumentParser(
                      prog="UK Tidal analysis",
                      description="Calculate tidal constiuents and RSL from tide gauge data",
