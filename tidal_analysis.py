@@ -85,7 +85,7 @@ def sea_level_rise(tidaldata):
     #x = matplotlib.dates.date2num(data.index.to_pydatetime())
     #y = data['Sea Level'].values
     slr_slope, _, _, slr_p_value, _ = scipy.stats.linregress(
-        matplotlib.dates.date2num(tidaldata.index.to_pydatetime()), data['Sea Level'].values)
+        matplotlib.dates.date2num(tidaldata.index.to_pydatetime()), tidaldata['Sea Level'].values)
     return slr_slope, slr_p_value
 def tidal_analysis(data_segment, cons, start_datetime):
     """
